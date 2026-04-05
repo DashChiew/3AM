@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Join — 3am{% endblock %}
+
+{% block content %}
+<div style="max-width: 420px; margin: 60px auto;">
+
+  <div style="text-align: center; margin-bottom: 32px;">
+    <div style="font-size: 3rem;">🌙</div>
+    <h1 style="font-size: 2.5rem; font-weight: 900; color: var(--purple); letter-spacing: -2px;">3AM</h1>
+    <p style="color: var(--muted); font-size: 0.9rem;">Join the community. You are not alone tonight.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Create your account</div>
+
+    <form method="POST">
+      <div style="margin-bottom: 14px;">
+        <label style="display:block; font-size:0.85rem; color:var(--muted); margin-bottom:6px;">
+          Username
+        </label>
+        <input type="text" name="username" style="width:100%; padding:10px 14px; border-radius:10px;
+                 background:var(--bg2); border:1px solid var(--border);
+                 color:var(--text); font-size:0.9rem;" placeholder="how should EmoBot call you?" required autofocus
+          minlength="3" maxlength="30">
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="display:block; font-size:0.85rem; color:var(--muted); margin-bottom:6px;">
+          Email
+        </label>
+        <input type="email" name="email" style="width:100%; padding:10px 14px; border-radius:10px;
+                 background:var(--bg2); border:1px solid var(--border);
+                 color:var(--text); font-size:0.9rem;" placeholder="your email address" required>
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="display:block; font-size:0.85rem; color:var(--muted); margin-bottom:6px;">
+          Password
+        </label>
+        <input type="password" name="password" style="width:100%; padding:10px 14px; border-radius:10px;
+                 background:var(--bg2); border:1px solid var(--border);
+                 color:var(--text); font-size:0.9rem;" placeholder="at least 8 characters" required minlength="8">
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <label style="display:block; font-size:0.85rem; color:var(--muted); margin-bottom:6px;">
+          Confirm Password
+        </label>
+        <input type="password" name="confirm_password" style="width:100%; padding:10px 14px; border-radius:10px;
+                 background:var(--bg2); border:1px solid var(--border);
+                 color:var(--text); font-size:0.9rem;" placeholder="repeat your password" required>
+      </div>
+
+      <div
+        style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px; background: var(--bg2); padding: 12px 16px; border-radius: 12px; border: 1px solid var(--border);">
+        <label class="switch" for="anon-toggle"
+          style="position: relative; display: inline-block; width: 38px; height: 20px; flex-shrink: 0;">
+          <input type="checkbox" id="anon-toggle" name="anonymous_mode" style="opacity: 0; width: 0; height: 0;">
+          <span class="slider"
+            style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; transition: .3s; border-radius: 20px; border: 1px solid var(--border);"></span>
+        </label>
+        <span style="font-size: 0.9rem; color: var(--muted);">Enter in Anonymous Mode 🌙</span>
+      </div>
+
+      <style>
+        .slider {
+          background-color: var(--card);
+        }
+
+        .switch input:checked+.slider {
+          background-color: var(--purple2);
+          border-color: var(--purple2);
+        }
+
+        .slider:before {
+          position: absolute;
+          content: "";
+          height: 14px;
+          width: 14px;
+          left: 2px;
+          bottom: 2px;
+          background-color: white;
+          transition: .3s;
+          border-radius: 50%;
+        }
+
+        .switch input:checked+.slider:before {
+          transform: translateX(18px);
+        }
+      </style>
+
+      <div style="background:var(--bg2); padding:12px; border-radius:10px;
+                  margin-bottom:16px; font-size:0.8rem; color:var(--muted);">
+        💜 3am is a safe space. Anonymous mode lets you post without
+        your username ever appearing.
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn btn-primary"
+        style="width:100%; justify-content:center; padding:12px;">
+        Join 3am
+      </button>
+    </form>
+
+    <script>
+      const anonToggle = document.getElementById('anon-toggle');
+      const submitBtn = document.getElementById('submitBtn');
+
+      anonToggle.addEventListener('change', () => {
+        if (anonToggle.checked) {
+          submitBtn.style.background = 'var(--purple)';
+        } else {
+          submitBtn.style.background = 'var(--purple2)';
+        }
+      });
+    </script>
+
+    <p style="text-align:center; margin-top:16px; font-size:0.85rem; color:var(--muted);">
+      Already have an account? <a href="/login" style="color:var(--purple);">Sign in →</a>
+    </p>
+  </div>
+
+</div>
+{% endblock %}

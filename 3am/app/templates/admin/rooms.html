@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Manage Night Rooms — 3AM Admin{% endblock %}
+
+{% block content %}
+<div style="display:flex; gap:8px; margin-bottom:16px;">
+  <a href="{{ url_for('admin.dashboard') }}" style="color:var(--muted); text-decoration:none; font-size:0.85rem; display:flex; align-items:center; gap:4px;">
+    <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" style="width:14px;height:14px;" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg> Back to Console
+  </a>
+</div>
+
+<h1 style="font-size:1.8rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+  <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" style="width:28px;height:28px;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+  Night Rooms Hierarchy
+</h1>
+
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-title" style="color:var(--purple);">Instantiate New Reality</div>
+  <form method="POST" action="{{ url_for('admin.manage_rooms') }}" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+    <input type="text" name="name" placeholder="Room Title (e.g. Rain Ambience)" required style="padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text);">
+    <input type="text" name="topic" placeholder="Topic / Type (e.g. Venting)" style="padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text);">
+    <input type="text" name="description" placeholder="Description" style="padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text);">
+    <button type="submit" class="btn btn-primary" style="grid-column:1 / -1;">Form Room</button>
+  </form>
+</div>
+
+<div class="card" style="overflow-x:auto;">
+  <table style="width:100%; border-collapse:collapse; text-align:left;">
+    <thead>
+      <tr style="border-bottom:1px solid var(--border); color:var(--muted); font-size:0.85rem;">
+        <th style="padding:12px;">ID</th>
+        <th style="padding:12px;">Name</th>
+        <th style="padding:12px;">Topic / Type</th>
+        <th style="padding:12px; text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rooms %}
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+        <td style="padding:12px;">{{ r.id }}</td>
+        <td style="padding:12px; font-weight:600;">{{ r.name }}</td>
+        <td style="padding:12px; color:var(--muted);">{{ r.topic }}</td>
+        <td style="padding:12px; text-align:right;">
+          <form method="POST" action="{{ url_for('admin.delete_room', id=r.id) }}" style="display:inline;" onsubmit="return confirm('WARNING: Purging this Room erases all its intrinsic chat history. Proceed?');">
+            <button type="submit" class="btn btn-ghost" style="color:var(--red); padding:6px 12px; font-size:0.75rem;">Purge Area</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

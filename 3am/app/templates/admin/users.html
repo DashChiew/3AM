@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Manage Users — 3AM Admin{% endblock %}
+
+{% block content %}
+<div style="display:flex; gap:8px; margin-bottom:16px;">
+  <a href="{{ url_for('admin.dashboard') }}" style="color:var(--muted); text-decoration:none; font-size:0.85rem; display:flex; align-items:center; gap:4px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;height:14px;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg> Back to Console
+  </a>
+</div>
+
+<h1 style="font-size:1.8rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:28px;height:28px;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+  User Management
+</h1>
+<p style="color:var(--muted); margin-bottom:24px;">Click the Transfer role button to securely hand over root admin rights.</p>
+
+<div class="card" style="margin-bottom:24px; border-left: 4px solid var(--red);">
+  <div class="card-title" style="color:var(--red);">Transfer Admin Status</div>
+  <p style="color:var(--muted); font-size:0.85rem; margin-bottom:16px;">
+    Admin accounts cannot be completely deleted mathematically. To step down, you must explicitly transfer your control to another user. You will immediately be downgraded to a standard user account.
+  </p>
+  <form method="POST" action="{{ url_for('admin.transfer_admin') }}" style="display:flex; gap:12px;">
+    <input type="text" name="target_username" placeholder="Exact Target Username" required style="padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text); flex:1;">
+    <button type="submit" class="btn btn-primary" style="background:var(--red); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:700;" onclick="return confirm('WARNING: Are you sure you want to transfer Root access? You will immediately lose all admin privileges.');">Transfer Root Access</button>
+  </form>
+</div>
+
+<div class="card" style="overflow-x:auto;">
+  <table style="width:100%; border-collapse:collapse; text-align:left;">
+    <thead>
+      <tr style="border-bottom:1px solid var(--border); color:var(--muted); font-size:0.85rem;">
+        <th style="padding:12px;">ID</th>
+        <th style="padding:12px;">Username</th>
+        <th style="padding:12px;">Email</th>
+        <th style="padding:12px;">Role</th>
+        <th style="padding:12px; text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+        <td style="padding:12px;">{{ user.id }}</td>
+        <td style="padding:12px; font-weight:600; color:var(--text);">{{ user.username }}</td>
+        <td style="padding:12px; color:var(--muted);">{{ user.email }}</td>
+        <td style="padding:12px;">
+          {% if user.is_admin %}
+            <span style="background:rgba(248, 113, 113, 0.1); color:var(--red); padding:4px 8px; border-radius:4px; font-size:0.75rem; font-weight:800; letter-spacing:1px;">ADMIN</span>
+          {% else %}
+            <span style="color:var(--muted); font-size:0.8rem;">Standard</span>
+          {% endif %}
+        </td>
+        <td style="padding:12px; text-align:right;">
+          {% if not user.is_admin %}
+          <form method="POST" action="{{ url_for('admin.delete_user', user_id=user.id) }}" style="display:inline;" onsubmit="return confirm('Permanently delete user {{ user.username }}? This cannot be undone.');">
+            <button type="submit" class="btn btn-ghost" style="color:var(--red); padding:6px 12px; font-size:0.75rem;">Delete User</button>
+          </form>
+          {% else %}
+          <span style="color:var(--muted); font-size:0.8rem; font-style:italic;">Protected Instance</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

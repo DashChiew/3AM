@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Manage Helplines — 3AM Admin{% endblock %}
+
+{% block content %}
+<div style="display:flex; gap:8px; margin-bottom:16px;">
+  <a href="{{ url_for('admin.dashboard') }}" style="color:var(--muted); text-decoration:none; font-size:0.85rem; display:flex; align-items:center; gap:4px;">
+    <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" style="width:14px;height:14px;" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg> Back to Console
+  </a>
+</div>
+
+<h1 style="font-size:1.8rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+  <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" style="width:28px;height:28px;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+  Global Crisis Helplines
+</h1>
+
+<div class="card" style="margin-bottom:24px;">
+  <div class="card-title" style="color:var(--purple);">Deploy New Helpline</div>
+  <form method="POST" action="{{ url_for('admin.manage_helplines') }}" style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+    <input type="text" name="name" placeholder="Name (e.g. Befrienders)" required style="padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text);">
+    <input type="text" name="phone" placeholder="Phone Number" required style="padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text);">
+    <input type="text" name="type" placeholder="Type (e.g. Suicide Prevention)" style="padding:10px; border-radius:8px; border:1px solid var(--border); background:var(--bg); color:var(--text);">
+    <label style="display:flex; align-items:center; gap:8px; color:var(--muted); font-size:0.875rem;">
+      <input type="checkbox" name="is_24hr" checked> 24-Hour Availability
+    </label>
+    <button type="submit" class="btn btn-primary" style="grid-column:1 / -1;">Spawn Service</button>
+  </form>
+</div>
+
+<div class="card" style="overflow-x:auto;">
+  <table style="width:100%; border-collapse:collapse; text-align:left;">
+    <thead>
+      <tr style="border-bottom:1px solid var(--border); color:var(--muted); font-size:0.85rem;">
+        <th style="padding:12px;">ID</th>
+        <th style="padding:12px;">Name</th>
+        <th style="padding:12px;">Contact</th>
+        <th style="padding:12px;">Type</th>
+        <th style="padding:12px; text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for h in helplines %}
+      <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+        <td style="padding:12px;">{{ h.id }}</td>
+        <td style="padding:12px; font-weight:600;">{{ h.name }} {% if h.is_24hr %}<span style="color:var(--green); font-size:0.7rem;">(24/7)</span>{% endif %}</td>
+        <td style="padding:12px; color:var(--purple);">{{ h.phone }}</td>
+        <td style="padding:12px; color:var(--muted);">{{ h.type }}</td>
+        <td style="padding:12px; text-align:right;">
+          <form method="POST" action="{{ url_for('admin.delete_helpline', id=h.id) }}" style="display:inline;" onsubmit="return confirm('Eradicate Helpline {{ h.name }} off the database permanently?');">
+            <button type="submit" class="btn btn-ghost" style="color:var(--red); padding:6px 12px; font-size:0.75rem;">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

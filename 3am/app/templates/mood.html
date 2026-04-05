@@ -1,0 +1,552 @@
+{% extends "base.html" %}
+{% block title %}Mood Tracker — 3AM{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Floating background circles ── */
+  .bg-circles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .circle {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.07;
+    animation: float linear infinite;
+  }
+
+  @keyframes float {
+    0% {
+      transform: translateY(0px) scale(1);
+    }
+
+    50% {
+      transform: translateY(-40px) scale(1.05);
+    }
+
+    100% {
+      transform: translateY(0px) scale(1);
+    }
+  }
+
+  /* ── Page content above circles ── */
+  .page-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Emoji buttons ── */
+  .emoji-btn {
+    font-size: 1.8rem;
+    padding: 10px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg2);
+    user-select: none;
+  }
+
+  .emoji-btn:hover {
+    transform: translateY(-4px) scale(1.15);
+    border-color: var(--purple);
+    background: rgba(124, 110, 240, 0.1);
+  }
+
+  /* .selected: visual styling only — animation is set via JS inline style */
+  .emoji-btn.selected {
+    border-color: var(--purple);
+    background: rgba(124, 110, 240, 0.2);
+    box-shadow: 0 8px 24px rgba(124, 110, 240, 0.3);
+    will-change: transform;
+  }
+
+  .emoji-btn .score-label {
+    font-size: 0.65rem;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  /* ── Continuous Float on selected emoji ── */
+  @keyframes float-loud {
+    0%, 100% {
+      transform: translateY(-6px) scale(1.15);
+      box-shadow: 0 8px 24px rgba(124, 110, 240, 0.3);
+    }
+    50% {
+      transform: translateY(-24px) scale(1.25);
+      box-shadow: 0 16px 40px rgba(124, 110, 240, 0.6);
+    }
+  }
+
+  /* ── Streak counter animation ── */
+  @keyframes count-up {
+    from {
+      transform: scale(0.5);
+      opacity: 0;
+    }
+
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .streak-number {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--purple);
+    animation: count-up 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* ── Mood bar ── */
+  .mood-bar-wrap {
+    height: 8px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: 6px;
+  }
+
+  .mood-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+    background: linear-gradient(90deg, #5b4fcf, #7c6ef0, #a89af5);
+  }
+
+  /* ── Submit button animation ── */
+  .submit-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 14px;
+    font-size: 1rem;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(92, 79, 207, 0.4);
+  }
+
+  .submit-btn:active {
+    transform: translateY(0);
+  }
+
+  /* ── Ripple effect ── */
+  @keyframes ripple {
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    width: 20px;
+    height: 20px;
+    animation: ripple 0.6s linear;
+    pointer-events: none;
+  }
+
+  /* ── Recent mood items ── */
+  .mood-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+
+  .mood-item:hover {
+    padding-left: 6px;
+    border-color: var(--purple);
+  }
+
+  .mood-emoji-big {
+    font-size: 1.6rem;
+    transition: transform 0.2s;
+  }
+
+  .mood-item:hover .mood-emoji-big {
+    transform: scale(1.2);
+  }
+
+  /* ── Badges System ── */
+  .badge-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 8px;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .badge-item.locked {
+    filter: grayscale(1) opacity(0.4);
+  }
+  .badge-item.earned {
+    border-color: var(--badge-color);
+    box-shadow: 0 4px 20px -5px var(--badge-color);
+  }
+  .badge-item.earned::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at 50% 0%, var(--badge-color) 0%, transparent 60%);
+    opacity: 0.15;
+    pointer-events: none;
+  }
+  .badge-icon-wrap {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--badge-color);
+  }
+  .badge-svg {
+    width: 38px;
+    height: 38px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+  }
+  .badge-item.earned .badge-svg {
+    filter: drop-shadow(0 0 12px var(--badge-color));
+    animation: float-badge 3s ease-in-out infinite;
+  }
+  @keyframes float-badge {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px) scale(1.05); }
+  }
+  .badge-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .badge-desc {
+    font-size: 0.65rem;
+    color: var(--muted);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Floating background circles -->
+<div class="bg-circles" id="bgCircles"></div>
+
+<div class="page-content">
+
+  <h1 style="font-size:1.5rem; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:8px;">
+    <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" style="width:24px;height:24px;color:var(--purple);" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+    Mood Tracker
+  </h1>
+  <p style="color:var(--muted); margin-bottom:24px;">
+    Log how you feel each night. Small check-ins, big patterns.
+  </p>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+
+    <!-- Check-in form -->
+    <div class="card">
+      <div class="card-title">Tonight's Check-In</div>
+      <form method="POST" action="/mood/checkin" id="moodForm">
+
+        <!-- Emoji selector -->
+        <div style="display:flex; justify-content:space-between;
+                  flex-wrap:wrap; gap:6px; margin-bottom:16px;" id="emojiGrid">
+          {% for score, emoji in mood_emojis.items() %}
+          <label style="cursor:pointer;">
+            <input type="radio" name="score" value="{{ score }}" style="display:none;" required>
+            <div class="emoji-btn" data-score="{{ score }}">
+              <span>{{ emoji }}</span>
+              <span class="score-label">{{ score }}</span>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+
+        <!-- Mood bar -->
+        <div style="margin-bottom:16px;">
+          <div style="display:flex; justify-content:space-between;
+                    font-size:0.8rem; color:var(--muted); margin-bottom:4px; align-items:center;">
+            <span style="display:flex; align-items:center; gap:4px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;height:14px;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M16 16s-1.5-2-4-2-4 2-4 2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg> Low</span>
+            <span id="moodLabel" style="color:var(--purple); font-weight:700;">
+              Select a mood
+            </span>
+            <span style="display:flex; align-items:center; gap:4px;">High <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;height:14px;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg></span>
+          </div>
+          <div class="mood-bar-wrap">
+            <div class="mood-bar-fill" id="moodBar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <!-- Optional note -->
+        <div style="margin-bottom:16px;">
+          <label style="display:block; font-size:0.85rem;
+                      color:var(--muted); margin-bottom:6px;">
+            Optional note
+          </label>
+          <textarea name="note" style="width:100%; padding:10px; border-radius:10px;
+                 background:var(--bg2); border:1px solid var(--border);
+                 color:var(--text); font-size:0.875rem; resize:vertical;
+                 min-height:70px; font-family:inherit;
+                 transition: border-color 0.2s;" placeholder="How are you feeling tonight?" maxlength="500"
+            onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary submit-btn" id="submitBtn">
+          Log Mood <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" style="width:16px;height:16px;margin-left:4px;" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+        </button>
+      </form>
+    </div>
+
+    <!-- Stats -->
+    <div class="card">
+      <div class="card-title">Your Stats</div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr;
+                gap:12px; margin-bottom:20px;">
+        <div style="background:var(--bg2); padding:16px; border-radius:10px;
+                  text-align:center;">
+          <div class="streak-number">{{ current_user.checkin_streak }}</div>
+          <div style="font-size:0.8rem; color:var(--muted); display:flex; align-items:center; justify-content:center; gap:4px;">Night Streak <svg viewBox="0 0 24 24" fill="var(--red)" stroke="none" style="width:12px;height:12px;" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg></div>
+        </div>
+        <div style="background:var(--bg2); padding:16px; border-radius:10px;
+                  text-align:center;">
+          <div class="streak-number">{{ avg if avg else '—' }}</div>
+          <div style="font-size:0.8rem; color:var(--muted);">Avg Mood (30d)</div>
+        </div>
+      </div>
+
+      <!-- Recent moods -->
+      <div class="card-title">Recent Check-Ins</div>
+      {% for m in recent_moods %}
+      <div class="mood-item">
+        <span class="mood-emoji-big">{{ m.mood_emoji or '😐' }}</span>
+        <div style="flex:1;">
+          <span style="font-weight:700;">{{ m.mood_score }}/10</span>
+          {% if m.note %}
+          <span style="font-size:0.8rem; color:var(--muted);
+                     margin-left:8px;">— {{ m.note[:40] }}</span>
+          {% endif %}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:0.75rem; color:var(--muted);">
+            {{ m.logged_at.strftime('%b %d') }}
+          </div>
+          <!-- Mini mood bar -->
+          <div style="width:60px; height:4px; background:var(--border);
+                    border-radius:99px; margin-top:4px;">
+            <div style="width:{{ (m.mood_score / 10 * 100)|int }}%;
+                      height:100%; border-radius:99px;
+                      background: var(--purple);"></div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <p style="color:var(--muted); font-size:0.875rem; margin-top:8px; display:flex; align-items:center; gap:6px;">
+        No check-ins yet — log your first one! <svg viewBox="0 0 24 24" fill="var(--green)" stroke="none" style="width:14px;height:14px;" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-7l-2-2"></path><path d="M12 15l2-2"></path><path d="M12 22a8 8 0 0 0 8-8c0-3.3-2-5-5-5s-5 1.7-5 5"></path><path d="M12 22a8 8 0 0 1-8-8c0-3.3 2-5 5-5s5 1.7 5 5"></path></svg>
+      </p>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <!-- Badges -->
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title" style="display:flex; align-items:center; gap:8px;">
+      <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" style="width:18px;height:18px;color:var(--purple);" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15l-3 3-3-3m0-6l3-3 3 3"></path><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+      Wellness Badges
+    </div>
+    
+    {% if current_user.checkin_streak < 3 %}
+      <p style="color:var(--muted); font-size:0.875rem; margin-bottom:12px;">Log 3 consecutive nights to unlock your first badge! ✨</p>
+    {% endif %}
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px;">
+      {% for b in badges_status %}
+        <div class="badge-item {{ 'earned' if b.earned else 'locked' }}" style="--badge-color: {{ b.color }};">
+          <div class="badge-icon-wrap">
+            {% if b.id == 'diamond' %}
+              <!-- Diamond SVG -->
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="badge-svg">
+                <path d="M12 2l8 8-8 12-8-12 8-8z"/>
+              </svg>
+            {% else %}
+              <!-- Star/Medal SVG -->
+              <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" class="badge-svg">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            {% endif %}
+          </div>
+          <div class="badge-name">{{ b.name }}</div>
+          <div class="badge-desc">{{ b.desc }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Mood chart -->
+  {% if chart_data %}
+  <div class="card" style="margin-top:16px;">
+    <div class="card-title" style="display:flex; align-items:center; gap:8px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:18px;height:18px;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+      Your 30-Day Mood History
+    </div>
+    <canvas id="moodChart" height="80"></canvas>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  // ── Floating background circles ──────────────────────────────────────────────
+  const colors = ['#7c6ef0', '#5b4fcf', '#a89af5', '#4ade80', '#f87171'];
+  const container = document.getElementById('bgCircles');
+  for (let i = 0; i < 12; i++) {
+    const el = document.createElement('div');
+    el.className = 'circle';
+    const size = Math.random() * 200 + 60;
+    el.style.cssText = `
+    width: ${size}px;
+    height: ${size}px;
+    left: ${Math.random() * 100}%;
+    top: ${Math.random() * 100}%;
+    background: ${colors[Math.floor(Math.random() * colors.length)]};
+    animation-duration: ${Math.random() * 6 + 4}s;
+    animation-delay: ${Math.random() * 4}s;
+  `;
+    container.appendChild(el);
+  }
+
+  // ── Emoji selector (Web Animations API — immune to CSS cascade) ─────────────
+  const LABELS = {
+    1: 'Struggling badly', 2: 'Really sad', 3: 'Feeling low',
+    4: 'A bit down', 5: 'Neutral', 6: 'Okay',
+    7: 'Pretty good', 8: 'Good', 9: 'Really good', 10: 'Amazing!'
+  };
+
+  const FLOAT_KEYFRAMES = [
+    { transform: 'translateY(-6px) scale(1.15)',  boxShadow: '0 8px 24px rgba(124,110,240,0.35)' },
+    { transform: 'translateY(-22px) scale(1.25)', boxShadow: '0 18px 40px rgba(124,110,240,0.65)' },
+    { transform: 'translateY(-6px) scale(1.15)',  boxShadow: '0 8px 24px rgba(124,110,240,0.35)' }
+  ];
+  const FLOAT_TIMING = { duration: 1800, iterations: Infinity, easing: 'ease-in-out' };
+
+  let activeAnim = null;
+
+  document.querySelectorAll('.emoji-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      // Prevent label from re-dispatching a second click to the input (avoids double-fire)
+      e.preventDefault();
+
+      // Cancel any running animation and clear selection from all buttons
+      if (activeAnim) { activeAnim.cancel(); activeAnim = null; }
+      document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+
+      // Mark selected visually
+      btn.classList.add('selected');
+
+      // Start float via Web Animations API — runs outside CSS cascade, hover can't interfere
+      activeAnim = btn.animate(FLOAT_KEYFRAMES, FLOAT_TIMING);
+
+      // Manually check the radio (since we called preventDefault)
+      btn.closest('label').querySelector('input').checked = true;
+
+      // Update mood bar
+      const score = parseInt(btn.dataset.score);
+      document.getElementById('moodBar').style.width = (score * 10) + '%';
+      document.getElementById('moodLabel').textContent = LABELS[score];
+    });
+  });
+
+  // ── Ripple on submit button click ────────────────────────────────────────────
+  document.getElementById('submitBtn').addEventListener('click', function (e) {
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple';
+    const rect = this.getBoundingClientRect();
+    ripple.style.left = (e.clientX - rect.left - 10) + 'px';
+    ripple.style.top = (e.clientY - rect.top - 10) + 'px';
+    this.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 600);
+  });
+
+  // ── Stop floating when form submits ──────────────────────────────────────────
+  document.getElementById('moodForm').addEventListener('submit', function () {
+    if (activeAnim) { activeAnim.cancel(); activeAnim = null; }
+    document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+  });
+
+  {% if chart_data %}
+  // ── Mood chart ───────────────────────────────────────────────────────────────
+  const ctx = document.getElementById('moodChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{ chart_labels | tojson }},
+    datasets: [{
+      label: 'Mood',
+      data: {{ chart_data | tojson }},
+    borderColor: '#7c6ef0',
+    backgroundColor: 'rgba(124,110,240,0.1)',
+    fill: true,
+    tension: 0.4,
+    pointBackgroundColor: '#7c6ef0',
+    pointBorderColor: '#fff',
+    pointBorderWidth: 2,
+    pointRadius: 6,
+    pointHoverRadius: 9
+    }]
+  },
+    options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const emojis = ['', '😭', '😢', '😟', '😔', '😐', '🙂', '😊', '😄', '🥰', '🤩'];
+            return ` ${emojis[ctx.raw]} ${ctx.raw}/10`;
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        min: 1, max: 10,
+        ticks: { color: '#8888aa', stepSize: 1 },
+        grid: { color: '#2a2a50' }
+      },
+      x: {
+        ticks: { color: '#8888aa' },
+        grid: { color: '#2a2a50' }
+      }
+    }
+  }
+});
+  {% endif %}
+</script>
+{% endblock %}

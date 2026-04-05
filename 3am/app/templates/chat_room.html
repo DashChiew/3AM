@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}{{ room.name }} — 3AM{% endblock %}
+
+{% block extra_css %}
+<style>
+.room-layout {
+  display: flex; flex-direction: column;
+  height: calc(100vh - 180px);
+}
+.room-messages {
+  flex: 1; overflow-y: auto; padding: 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  background: var(--bg2);
+  border-radius: 12px 12px 0 0;
+  border: 1px solid var(--border);
+  border-bottom: none;
+}
+.chat-msg { display: flex; flex-direction: column; max-width: 75%; }
+.chat-msg.mine   { align-self: flex-end;   align-items: flex-end; }
+.chat-msg.theirs { align-self: flex-start; align-items: flex-start; }
+.chat-bubble {
+  padding: 10px 14px; border-radius: 16px; font-size: 0.9rem; line-height: 1.5;
+}
+.mine   .chat-bubble { background: var(--purple2); color: #fff; border-radius: 16px 4px 16px 16px; }
+.theirs .chat-bubble { background: var(--bg3); color: var(--text); border-radius: 4px 16px 16px 16px; }
+.chat-meta { font-size: 0.7rem; color: var(--muted); margin-top: 3px; }
+.status-msg {
+  text-align: center; font-size: 0.75rem;
+  color: var(--muted); padding: 4px;
+}
+.room-input {
+  display: flex; gap: 10px; padding: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0 0 12px 12px;
+}
+.room-input input {
+  flex: 1; padding: 10px 16px; border-radius: 99px;
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+.room-input input:focus {
+  outline: none; border-color: var(--purple);
+}
+.crisis-hint {
+  background: rgba(248,113,113,0.08);
+  border: 1px solid rgba(248,113,113,0.3);
+  border-radius: 8px; padding: 8px 12px;
+  font-size: 0.8rem; margin-top: 4px;
+  color: var(--red);
+}
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.chat-msg { animation: msgIn 0.3s ease; }
+@keyframes pulseOpacity {
+  0%   { opacity: 0.5; }
+  50%  { opacity: 0.85; }
+  100% { opacity: 0.5; }
+}
+.pending-msg { animation: pulseOpacity 1.4s infinite ease-in-out !important; }
+#sendBtn { transition: transform 0.1s ease; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div style="display:flex; justify-content:space-between;
+            align-items:center; margin-bottom:16px;">
+  <div>
+    <h1 style="font-size:1.3rem; font-weight:700; display:flex; align-items:center; gap:8px;">
+      <svg viewBox="0 0 24 24" fill="none" class="nav-icon" style="width:24px;height:24px;color:var(--purple);" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      {{ room.name }}
+    </h1>
+    <p style="color:var(--muted); font-size:0.85rem;">{{ room.description }}</p>
+  </div>
+  <a href="/chat" class="btn btn-ghost" style="font-size:0.8rem;">
+    ← All Rooms
+  </a>
+</div>
+
+<div class="room-layout">
+  <div class="room-messages" id="roomMessages">
+    {% for msg in history %}
+    <div class="chat-msg {% if msg.user_id == current_user.id %}mine{% else %}theirs{% endif %}">
+      <div class="chat-meta" style="margin-bottom:3px; font-weight:600; font-size:0.75rem;">
+        {% if msg.is_anonymous %}Anonymous{% else %}{{ msg.user.username }}{% endif %}
+      </div>
+      <div class="chat-bubble">{{ msg.message }}</div>
+      <div class="chat-meta">
+        {{ msg.timestamp.strftime('%H:%M') }}
+        {% if current_user.is_admin %}
+        · <span onclick="window.deleteAdminChat('{{ msg.id }}', this)" style="color:var(--red); cursor:pointer; font-weight:700;">🗑️ Scrub</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="room-input">
+    <input type="text" id="roomInput"
+           placeholder="Say something kind..."
+           autocomplete="off" maxlength="500">
+    <button class="btn btn-primary" id="sendBtn" onclick="sendMsg()">Send</button>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const socket   = io();
+  const roomId   = "{{ room.id }}";
+  const isAdmin  = {{ 'true' if current_user.is_admin else 'false' }};
+  const myId     = "{{ current_user.id }}";
+  const myName   = "{{ 'Anonymous' if current_user.is_anonymous_mode else current_user.username }}";
+  const messages = document.getElementById('roomMessages');
+  const input    = document.getElementById('roomInput');
+  const sendBtn  = document.getElementById('sendBtn');
+
+  // ── Join room ────────────────────────────────────────────────────
+  socket.emit('join', { room_id: roomId });
+
+  // ── Status messages (join / leave / moderation) ──────────────────
+  socket.on('status', data => {
+    const div = document.createElement('div');
+    div.className = 'status-msg';
+    if (data.msg && data.msg.includes('❌')) {
+      div.style.color = 'var(--red)';
+      div.style.fontWeight = '600';
+      const pending = document.querySelectorAll('.pending-msg');
+      if (pending.length > 0) pending[pending.length - 1].remove();
+    }
+    div.textContent = data.msg;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  });
+
+  // ── Incoming messages ────────────────────────────────────────────
+  socket.on('chat_message', data => {
+    const isMine = String(data.user_id) === String(myId);
+
+    let html = `
+      <div class="chat-meta" style="margin-bottom:3px;font-weight:600;font-size:0.75rem;">${escHtml(data.sender)}</div>
+      <div class="chat-bubble">${escHtml(data.message)}</div>
+      <div class="chat-meta">
+        ${data.timestamp}`;
+        
+    if (isAdmin && data.msg_id) {
+       html += ` · <span onclick="window.deleteAdminChat('${data.msg_id}', this)" style="color:var(--red); cursor:pointer; font-weight:700;">🗑️ Scrub</span>`;
+    }
+    
+    html += `</div>`;
+
+    if (data.show_crisis_help) {
+      html += `<div class="crisis-hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> Help available 24/7 —
+        <strong>Befrienders KL: 03-7627 2929</strong> ·
+        <strong>Talian Kasih: 15999</strong></div>`;
+    }
+
+    // Smoothly "confirm" the optimistic pending bubble
+    if (isMine) {
+      const pending = document.querySelectorAll('.pending-msg');
+      if (pending.length > 0) {
+        const p = pending[0];
+        p.classList.remove('pending-msg');
+        p.style.opacity = '1';
+        p.style.animation = 'none';
+        p.innerHTML = html;
+        messages.scrollTop = messages.scrollHeight;
+        return;
+      }
+    }
+
+    const div = document.createElement('div');
+    div.className = `chat-msg ${isMine ? 'mine' : 'theirs'}`;
+    div.innerHTML = html;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  });
+
+  // ── Send message ─────────────────────────────────────────────────
+  window.sendMsg = function () {
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    // Button press animation
+    sendBtn.style.transform = 'scale(0.92)';
+    setTimeout(() => { sendBtn.style.transform = 'scale(1)'; }, 150);
+
+    // Optimistic UI — show immediately with pulse animation
+    const div = document.createElement('div');
+    div.className = 'chat-msg mine pending-msg';
+    div.innerHTML = `
+      <div class="chat-meta" style="margin-bottom:3px;font-weight:600;font-size:0.75rem;">${escHtml(myName)}</div>
+      <div class="chat-bubble">${escHtml(msg)}</div>
+      <div class="chat-meta">Sending...</div>`;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+
+    socket.emit('chat_message', { room_id: roomId, message: msg });
+    input.value = '';
+    input.focus();
+  };
+
+  // ── Enter key to send ─────────────────────────────────────────────
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); sendMsg(); }
+  });
+
+  // ── Leave on page unload ──────────────────────────────────────────
+  window.addEventListener('beforeunload', () => {
+    socket.emit('leave', { room_id: roomId });
+  });
+
+  // ── Scroll to bottom on load ──────────────────────────────────────
+  messages.scrollTop = messages.scrollHeight;
+
+  // ── XSS-safe HTML escape ──────────────────────────────────────────
+  function escHtml(s) {
+    if (!s) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+  // ── Global Admin Delete ──────────────────────────────────────────
+  window.deleteAdminChat = function(msgId, elem) {
+      if (!confirm("Administratively scrub this message eternally?")) return;
+      fetch(`/admin/delete_chat/${msgId}`, { method: 'POST' })
+          .then(r => r.json())
+          .then(res => {
+              if (res.status === 'erased_by_admin') {
+                  const chatRow = elem.closest('.chat-msg');
+                  if (chatRow) chatRow.remove();
+              }
+          });
+  };
+
+});
+</script>
+{% endblock %}

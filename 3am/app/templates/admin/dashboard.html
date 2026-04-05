@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — 3AM{% endblock %}
+
+{% block content %}
+<h1 style="font-size:1.8rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+  <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="var(--red)" style="width:28px;height:28px;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+  Root Console
+</h1>
+<p style="color:var(--muted); margin-bottom:24px;">Platform metrics & security control center.</p>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px;">
+  <div class="card" style="text-align:center;">
+    <div style="font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Users</div>
+    <div style="font-size:2.5rem; font-weight:800; color:var(--text);">{{ stats.users }}</div>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div style="font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Moods Logged</div>
+    <div style="font-size:2.5rem; font-weight:800; color:var(--purple);">{{ stats.moods }}</div>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div style="font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Community Posts</div>
+    <div style="font-size:2.5rem; font-weight:800; color:var(--text);">{{ stats.posts }}</div>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div style="font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Crisis Alerts</div>
+    <div style="font-size:2.5rem; font-weight:800; color:var(--red);">{{ stats.alerts }}</div>
+  </div>
+  <div class="card" style="text-align:center;">
+    <div style="font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Unread Feedback</div>
+    <div style="font-size:2.5rem; font-weight:800; color:var(--purple);">{{ stats.unread_feedback }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-title">Quick Actions</div>
+  <p style="color:var(--muted); font-size:0.85rem; margin-bottom:16px;">
+    To step down as Admin or delete user accounts, proceed to the management screen.
+  </p>
+  <div style="display:flex; gap:12px; flex-wrap:wrap;">
+    <a href="{{ url_for('admin.manage_users') }}" class="btn btn-primary" style="text-decoration:none;">Manage Users</a>
+    <a href="{{ url_for('admin.manage_helplines') }}" class="btn btn-ghost" style="text-decoration:none;">Crisis Helplines</a>
+    <a href="{{ url_for('admin.manage_rooms') }}" class="btn btn-ghost" style="text-decoration:none;">Night Rooms Matrix</a>
+    <a href="{{ url_for('admin.view_feedback') }}" class="btn btn-ghost" style="text-decoration:none;">
+        User Feedback 
+        {% if stats.unread_feedback > 0 %}
+        <span style="background:var(--red); color:white; padding:2px 8px; border-radius:99px; font-size:0.7rem; margin-left:6px;">{{ stats.unread_feedback }}</span>
+        {% endif %}
+    </a>
+  </div>
+</div>
+{% endblock %}

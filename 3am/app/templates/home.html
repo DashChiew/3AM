@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+{% block title %}Home — 3AM{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Google Font ── */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+  .page-wrap { font-family: 'Inter', system-ui, sans-serif; }
+
+  /* ── Hero ── */
+  .hero {
+    position: relative;
+    background: linear-gradient(135deg, rgba(92,79,207,0.18) 0%, rgba(124,110,240,0.06) 60%, transparent 100%);
+    border: 1px solid rgba(124,110,240,0.2);
+    border-radius: 20px;
+    padding: 36px 40px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(124,110,240,0.25) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-time {
+    font-size: 3.8rem;
+    font-weight: 900;
+    letter-spacing: -2px;
+    color: var(--purple);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .hero-greeting {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .hero-sub {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-bottom: 20px;
+    max-width: 400px;
+    line-height: 1.5;
+  }
+  .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ── Affirmation ticker ── */
+  .affirmation-box {
+    background: rgba(124,110,240,0.08);
+    border: 1px solid rgba(124,110,240,0.2);
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 52px;
+  }
+  .affirmation-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .affirmation-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    font-style: italic;
+    transition: opacity 0.4s;
+  }
+
+  /* ── Grid ── */
+  .home-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 700px) {
+    .home-grid { grid-template-columns: 1fr; }
+    .hero { padding: 24px 20px; }
+    .hero-time { font-size: 2.6rem; }
+  }
+
+  /* ── Feature cards ── */
+  .feat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1),
+                border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .feat-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--card-glow, rgba(124,110,240,0));
+    transition: background 0.3s;
+    pointer-events: none;
+    border-radius: inherit;
+  }
+  .feat-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    border-color: var(--card-accent, var(--purple));
+    box-shadow: 0 12px 32px -8px var(--card-shadow, rgba(124,110,240,0.4));
+  }
+  .feat-card:hover::after {
+    background: var(--card-glow, rgba(124,110,240,0.05));
+  }
+  .feat-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--card-icon-bg, rgba(124,110,240,0.15));
+    font-size: 1.4rem;
+    flex-shrink: 0;
+    transition: transform 0.3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .feat-card:hover .feat-icon { transform: scale(1.2) rotate(-5deg); }
+  .feat-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .feat-desc {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.5;
+    flex: 1;
+  }
+  .feat-arrow {
+    color: var(--card-accent, var(--purple));
+    font-size: 1.1rem;
+    align-self: flex-end;
+    transition: transform 0.2s;
+  }
+  .feat-card:hover .feat-arrow { transform: translateX(4px); }
+
+  /* ── Bottom row: breathing ring + helplines ── */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+  @media (max-width: 700px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+  /* ── Breathing ring widget ── */
+  .breathe-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    min-width: 180px;
+  }
+  .ring-wrap {
+    position: relative;
+    width: 110px; height: 110px;
+    cursor: pointer;
+  }
+  .ring-wrap svg { position: absolute; top:0; left:0; }
+  .ring-bg { fill: none; stroke: var(--border); stroke-width: 6; }
+  .ring-fill {
+    fill: none;
+    stroke: var(--purple);
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 283;
+    transform: rotate(-90deg);
+    transform-origin: center;
+    transition: stroke 0.3s;
+  }
+  .ring-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.3;
+    user-select: none;
+  }
+  .ring-label #ringSec { font-size: 1.5rem; display: block; color: var(--purple); font-weight: 900; }
+  .ring-label #ringPhase { font-size: 0.65rem; display: block; color: var(--muted); font-weight: 700; }
+  .breathe-title { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+  .breathe-hint { font-size: 0.72rem; color: var(--muted); text-align: center; }
+
+  /* ── Helplines section ── */
+  .helplines-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+  }
+  .helpline-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--bg2);
+    margin-bottom: 8px;
+    transition: background 0.2s, transform 0.2s;
+  }
+  .helpline-row:last-child { margin-bottom: 0; }
+  .helpline-row:hover {
+    background: rgba(124,110,240,0.1);
+    transform: translateX(4px);
+  }
+  .helpline-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%,100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.6; }
+  }
+  .helpline-name { font-size: 0.875rem; font-weight: 600; flex: 1; padding: 0 10px; }
+  .helpline-phone { font-size: 0.875rem; font-weight: 700; color: var(--purple); letter-spacing: 0.5px; }
+
+  /* ── Mood quick pick ── */
+  .mood-quick {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+  .mood-quick-row {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;
+  }
+  .mini-emoji {
+    font-size: 1.5rem;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: var(--bg2);
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(.34,1.56,.64,1), border-color 0.2s;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .mini-emoji:hover {
+    transform: translateY(-4px) scale(1.2);
+    border-color: var(--purple);
+  }
+
+  /* ── Section labels ── */
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-wrap">
+
+  <!-- ── Hero ── -->
+  <div class="hero">
+    <div class="hero-time" id="liveClock">–––</div>
+    <div class="hero-greeting">Good <span id="timePeriod">evening</span>, {{ current_user.username }} 🌙</div>
+    <div class="hero-sub">You showed up. That already takes courage. Whatever brought you here tonight — you don't have to face it alone.</div>
+    <div class="hero-actions">
+      <a href="/emobot" class="btn btn-primary">Talk to EmoBot</a>
+      <a href="/mood" class="btn btn-ghost">Log Mood</a>
+    </div>
+  </div>
+
+  <!-- ── Daily affirmation ── -->
+  <div class="section-label">Daily Affirmation</div>
+  <div class="affirmation-box" id="affirmBoxClick" style="cursor:pointer;" title="Click for a new affirmation">
+    <span class="affirmation-icon">✨</span>
+    <div class="affirmation-text" id="affirmText">You are allowed to feel everything you're feeling right now.</div>
+  </div>
+
+  <!-- ── Quick mood pick ── -->
+  <div class="mood-quick">
+    <div class="section-label">Quick Mood Check-In</div>
+    <p style="font-size:0.85rem; color:var(--muted);">How are you feeling right now? Tap to log it.</p>
+    <div class="mood-quick-row">
+      <a href="/mood?score=1" class="mini-emoji" title="Struggling badly">😭</a>
+      <a href="/mood?score=2" class="mini-emoji" title="Really sad">😢</a>
+      <a href="/mood?score=3" class="mini-emoji" title="Feeling low">😟</a>
+      <a href="/mood?score=4" class="mini-emoji" title="A bit down">😔</a>
+      <a href="/mood?score=5" class="mini-emoji" title="Neutral">😐</a>
+      <a href="/mood?score=6" class="mini-emoji" title="Okay">🙂</a>
+      <a href="/mood?score=7" class="mini-emoji" title="Pretty good">😊</a>
+      <a href="/mood?score=8" class="mini-emoji" title="Good">😄</a>
+      <a href="/mood?score=9" class="mini-emoji" title="Really good">🥰</a>
+      <a href="/mood?score=10" class="mini-emoji" title="Amazing!">🤩</a>
+    </div>
+  </div>
+
+  <!-- ── Feature cards ── -->
+  <div class="section-label">Where do you want to go?</div>
+  <div class="home-grid">
+
+    <a href="/emobot" class="feat-card"
+       style="--card-accent:#7c6ef0; --card-shadow:rgba(124,110,240,0.4); --card-icon-bg:rgba(124,110,240,0.15);">
+      <div class="feat-icon">🤖</div>
+      <div class="feat-title">EmoBot</div>
+      <div class="feat-desc">An AI companion that listens without judgment. Talk about anything — it's awake at 3AM too.</div>
+      <div class="feat-arrow">→</div>
+    </a>
+
+    <a href="/feed" class="feat-card"
+       style="--card-accent:#a78bfa; --card-shadow:rgba(167,139,250,0.4); --card-icon-bg:rgba(167,139,250,0.15);">
+      <div class="feat-icon">💬</div>
+      <div class="feat-title">Community Feed</div>
+      <div class="feat-desc">Share your thoughts anonymously. Read and connect with others going through the same nights.</div>
+      <div class="feat-arrow">→</div>
+    </a>
+
+    <a href="/chat" class="feat-card"
+       style="--card-accent:#38bdf8; --card-shadow:rgba(56,189,248,0.35); --card-icon-bg:rgba(56,189,248,0.12);">
+      <div class="feat-icon">🌙</div>
+      <div class="feat-title">Night Rooms</div>
+      <div class="feat-desc">Live anonymous chat rooms for sleeplessness, panic, anxiety and more. Someone is always there.</div>
+      <div class="feat-arrow">→</div>
+    </a>
+
+    <a href="/mood" class="feat-card"
+       style="--card-accent:#4ade80; --card-shadow:rgba(74,222,128,0.35); --card-icon-bg:rgba(74,222,128,0.12);">
+      <div class="feat-icon">📊</div>
+      <div class="feat-title">Mood Tracker</div>
+      <div class="feat-desc">Log your nightly mood and watch your patterns over time. Small check-ins, big self-awareness.</div>
+      <div class="feat-arrow">→</div>
+    </a>
+
+  </div>
+
+  <!-- ── Breathing ring + Helplines ── -->
+  <div class="section-label">Tools & Support</div>
+  <div class="bottom-grid">
+
+    <!-- Breathing ring widget -->
+    <div class="breathe-card">
+      <div class="breathe-title">Box Breathing</div>
+      <div class="ring-wrap" id="breatheRing" title="Click to open Breathing Guide">
+        <svg width="110" height="110" viewBox="0 0 110 110">
+          <circle class="ring-bg" cx="55" cy="55" r="45"/>
+          <circle class="ring-fill" id="ringArc" cx="55" cy="55" r="45"/>
+        </svg>
+        <div class="ring-label" id="ringLabel">
+          <span id="ringPhase" style="font-size:0.8rem; color:var(--purple); font-weight:700;">Tap to open</span>
+        </div>
+      </div>
+      <div class="breathe-hint">Inhale 4 · Hold 4<br>Exhale 4 · Hold 4</div>
+      <a href="/breathing" class="btn btn-ghost" style="font-size:0.75rem; padding:6px 14px;">Full Guide →</a>
+    </div>
+
+    <!-- Helplines -->
+    <div class="helplines-card">
+      <div class="section-label" style="margin-bottom:14px;">Always Available — 24hr Lines</div>
+      {% for line in helplines %}
+      <div class="helpline-row">
+        <div class="helpline-dot"></div>
+        <div class="helpline-name">{{ line.name }}<br>
+          <span style="font-size:0.72rem; font-weight:400; color:var(--muted);">{{ line.type }}</span>
+        </div>
+        <a href="tel:{{ line.phone }}" class="helpline-phone" style="text-decoration:none;">{{ line.phone }}</a>
+      </div>
+      {% endfor %}
+      <a href="/helplines" class="btn btn-ghost" style="width:100%; justify-content:center; margin-top:12px; font-size:0.8rem;">
+        View All Helplines →
+      </a>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Live clock ──────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  document.getElementById('liveClock').textContent = `${h}:${m}:${s}`;
+  const hr = now.getHours();
+  const period = hr < 5 ? 'night' : hr < 12 ? 'morning' : hr < 17 ? 'afternoon' : hr < 21 ? 'evening' : 'night';
+  document.getElementById('timePeriod').textContent = period;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── Daily affirmations ──────────────────────────────────────────────────────
+const affirmations = [
+  "You are allowed to feel everything you're feeling right now.",
+  "Rest is not surrender. It's an act of self-compassion.",
+  "You have survived every hard night before this one.",
+  "You don't have to have it all figured out tonight.",
+  "Being gentle with yourself is a form of strength.",
+  "It's okay to take things one breath at a time.",
+  "You deserve kindness — especially from yourself.",
+  "Your feelings are valid. You are not 'too much'.",
+  "Small steps in the dark are still steps forward.",
+  "Asking for help is one of the bravest things you can do.",
+  "The fact that you're still here matters more than you know.",
+  "Tonight you rest. Tomorrow you continue.",
+];
+let affirmIdx = 0;
+const affirmEl = document.getElementById('affirmText');
+
+function rotateAffirmation() {
+  affirmEl.style.opacity = '0';
+  setTimeout(() => {
+    affirmIdx = (affirmIdx + 1) % affirmations.length;
+    affirmEl.textContent = affirmations[affirmIdx];
+    affirmEl.style.opacity = '1';
+  }, 400);
+}
+
+setInterval(rotateAffirmation, 7000);
+document.getElementById('affirmBoxClick').addEventListener('click', rotateAffirmation);
+
+
+// ── Box breathing ring redirect ──────────────────────────────────────────────
+document.getElementById('breatheRing').addEventListener('click', () => {
+  window.location.href = '/breathing?autoStart=box';
+});
+
+// ── Mini emoji hover pop + navigate ────────────────────────────────────────
+document.querySelectorAll('.mini-emoji').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    el.animate([
+      { transform: 'translateY(0) scale(1)' },
+      { transform: 'translateY(-6px) scale(1.3)' },
+    ], { duration: 200, fill: 'forwards', easing: 'cubic-bezier(.34,1.56,.64,1)' });
+  });
+  el.addEventListener('mouseleave', () => {
+    el.animate([
+      { transform: 'translateY(-6px) scale(1.3)' },
+      { transform: 'translateY(0) scale(1)' },
+    ], { duration: 200, fill: 'forwards', easing: 'ease-out' });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}3am{% endblock %}</title>
+  {% block extra_css %}{% endblock %}
+  <style>
+    /* ── Colours ── */
+    :root {
+      --bg: #0a0a1a;
+      --bg2: #111128;
+      --card: #16162e;
+      --border: #2a2a50;
+      --purple: #7c6ef0;
+      --purple2: #5b4fcf;
+      --text: #e8e8f5;
+      --muted: #8888aa;
+      --green: #4ade80;
+      --red: #f87171;
+      --sidebar-width: 240px;
+      --sidebar-collapsed-width: 80px;
+    }
+
+    /* ── Reset ── */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      overflow-x: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      height: 100vh;
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 100;
+      transition: width 0.3s ease, transform 0.3s ease;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .sidebar::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .sidebar::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    .sidebar.collapsed {
+      width: var(--sidebar-collapsed-width);
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      padding: 0 4px;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--purple);
+      letter-spacing: -1.5px;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+
+    .logo span {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0;
+      margin-top: -4px;
+    }
+
+    .sidebar.collapsed .logo {
+      opacity: 0;
+      visibility: hidden;
+      width: 0;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .nav-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      stroke-width: 2px;
+    }
+
+    .nav-text {
+      transition: opacity 0.2s;
+    }
+
+    .sidebar.collapsed .nav-text {
+      opacity: 0;
+      visibility: hidden;
+      width: 0;
+    }
+
+    .sidebar.collapsed .nav-link {
+      justify-content: center;
+      padding: 12px 0;
+    }
+
+    .nav-link:hover {
+      background: var(--card);
+      color: var(--purple);
+    }
+
+    .nav-link.active {
+      background: rgba(124, 110, 240, 0.1);
+      color: var(--purple);
+    }
+
+    /* ── Main content ── */
+    .main {
+      margin-left: var(--sidebar-width);
+      padding: 32px;
+      flex: 1;
+      width: 100%;
+      min-height: 100vh;
+      transition: margin-left 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .main.expanded {
+      margin-left: var(--sidebar-collapsed-width);
+    }
+
+    .main.no-sidebar {
+      margin-left: 0 !important;
+      padding-top: 60px;
+      /* Give some breathing room when no top bar */
+    }
+
+    /* ── Header Top Bar (For mobile menu & toggles) ── */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .menu-toggle {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .menu-toggle:hover {
+      background: var(--card);
+      color: var(--purple);
+    }
+
+    /* ── Mobile Layout ── */
+    .mobile-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 90;
+      backdrop-filter: blur(2px);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        width: 260px;
+      }
+
+      .sidebar.mobile-open {
+        transform: translateX(0);
+      }
+
+      .sidebar.collapsed {
+        width: 260px;
+        /* Don't mini-collapse on mobile */
+      }
+
+      .sidebar.collapsed .logo,
+      .sidebar.collapsed .nav-text {
+        opacity: 1;
+        visibility: visible;
+        width: auto;
+      }
+
+      .sidebar.collapsed .nav-link {
+        justify-content: flex-start;
+        padding: 12px 14px;
+      }
+
+      .main {
+        margin-left: 0 !important;
+        padding: 20px;
+      }
+
+      .mobile-overlay.active {
+        display: block;
+        opacity: 1;
+      }
+    }
+
+    /* ── Cards & UI Elements ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--purple);
+      margin-bottom: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .btn-primary {
+      background: var(--purple2);
+      color: white;
+      box-shadow: 0 4px 12px rgba(91, 79, 207, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: var(--purple);
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .flash {
+      padding: 12px 16px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      font-size: 0.875rem;
+      border-left: 4px solid;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .flash svg {
+      flex-shrink: 0;
+    }
+
+    .flash.success {
+      background: rgba(74, 222, 128, 0.1);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .flash.error {
+      background: rgba(248, 113, 113, 0.1);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .flash.info {
+      background: rgba(124, 110, 240, 0.1);
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+  </style>
+  {% block scripts %}{% endblock %}
+  {% set show_sidebar = request.endpoint not in ['auth.login', 'auth.register'] %}
+</head>
+
+<!-- Global floating circles — appears on every page -->
+<div id="globalBg" style="position:fixed; top:0; left:0; width:100%;
+     height:100%; pointer-events:none; z-index:-1; overflow:hidden;"></div>
+
+<body>
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+  {% if show_sidebar %}
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="brand-header">
+      <a href="/" class="logo" style="text-decoration: none; color: inherit; display: block;">
+        3AM <br><span>you are never alone</span>
+      </a>
+      <!-- Desktop toggle (visible when sidebar starts uncollapsed) -->
+      <button class="menu-toggle" id="insideToggle"
+        style="border:none; width:32px; height:32px; background:transparent;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" class="nav-icon" stroke-linecap="round"
+          stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Navigation Links with Modern SVGs -->
+    <a href="/" class="nav-link">
+      <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      </svg>
+      <span class="nav-text">Home</span>
+    </a>
+    <a href="/emobot" class="nav-link">
+      <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" stroke-linecap="round"
+        stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="10" rx="2"></rect>
+        <circle cx="12" cy="5" r="2"></circle>
+        <path d="M12 7v4"></path>
+        <line x1="8" y1="16" x2="8" y2="16"></line>
+        <line x1="16" y1="16" x2="16" y2="16"></line>
+      </svg>
+      <span class="nav-text">EmoBot</span>
+    </a>
+    <a href="/feed" class="nav-link">
+      <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path
+          d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+        </path>
+      </svg>
+      <span class="nav-text">Community</span>
+    </a>
+    <a href="/chat" class="nav-link">
+      <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+      </svg>
+      <span class="nav-text">Night Rooms</span>
+    </a>
+    <a href="/mood" class="nav-link">
+      <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" stroke-linecap="round"
+        stroke-linejoin="round">
+        <line x1="12" y1="20" x2="12" y2="10"></line>
+        <line x1="18" y1="20" x2="18" y2="4"></line>
+        <line x1="6" y1="20" x2="6" y2="16"></line>
+      </svg>
+      <span class="nav-text">Mood Tracker</span>
+    </a>
+    <a href="/helplines" class="nav-link">
+      <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path
+          d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+        </path>
+      </svg>
+      <span class="nav-text">Helplines</span>
+    </a>
+    <a href="/breathing" class="nav-link">
+      <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
+      </svg>
+      <span class="nav-text">Breathe</span>
+    </a>
+    <a href="/announcements" class="nav-link">
+      <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+      </svg>
+      <span class="nav-text">Announcements</span>
+    </a>
+
+    <!-- Bottom links -->
+    <div
+      style="margin-top:auto; padding-top:16px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:6px;">
+      {% if current_user.is_authenticated and current_user.is_admin %}
+      <a href="/admin" class="nav-link {{ 'active' if 'admin' in request.path }}">
+        <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="var(--red)" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        <span class="nav-text" style="color:var(--text); font-weight:700;">Root Console</span>
+      </a>
+      {% endif %}
+      <a href="/settings" class="nav-link">
+        <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" stroke-linecap="round"
+          stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+          </path>
+        </svg>
+        <span class="nav-text">Settings</span>
+      </a>
+      <a href="/logout" class="nav-link" style="color:var(--red);"
+        onclick="if(confirm('Sign out of 3AM?')){ alert('Remember you are not alone 💖, feel free to come back to us anytime!!!☺️'); return true; } return false;">
+        <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" stroke-linecap="round"
+          stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+          <polyline points="16 17 21 12 16 7"></polyline>
+          <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        <span class="nav-text">Sign Out</span>
+      </a>
+    </div>
+  </nav>
+  {% endif %}
+
+  <!-- Page content -->
+  <main class="main {{ 'no-sidebar' if not show_sidebar }}" id="mainContent">
+    {% if show_sidebar %}
+    <div class="top-bar">
+      <div style="flex:1;"></div> <!-- Spacer -->
+    </div>
+    {% endif %}
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="flash {{ category }}">
+      {% if category == 'success' %}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:20px;height:20px" stroke-linecap="round"
+        stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      {% elif category == 'error' %}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:20px;height:20px" stroke-linecap="round"
+        stroke-linejoin="round">
+        <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+        <line x1="9" y1="9" x2="15" y2="15"></line>
+      </svg>
+      {% else %}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" style="width:20px;height:20px" stroke-linecap="round"
+        stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>
+      {% endif %}
+      {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <!-- Each page fills this block -->
+    {% block content %}{% endblock %}
+
+  </main>
+
+  <script>
+    // ── Sidebar Toggle Logic ──
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    const insideToggle = document.getElementById('insideToggle');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+
+    function toggleSidebar() {
+      if (window.innerWidth <= 768) {
+        sidebar.classList.toggle('mobile-open');
+        mobileOverlay.classList.toggle('active');
+      } else {
+        sidebar.classList.toggle('collapsed');
+        mainContent.classList.toggle('expanded');
+        // Save preference
+        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+      }
+    }
+
+    if (insideToggle) insideToggle.addEventListener('click', toggleSidebar);
+    if (mobileOverlay) {
+      mobileOverlay.addEventListener('click', () => {
+        sidebar.classList.remove('mobile-open');
+        mobileOverlay.classList.remove('active');
+      });
+    }
+
+    // Load saved preference on desktop
+    if (sidebar && window.innerWidth > 768 && localStorage.getItem('sidebarCollapsed') === 'true') {
+      sidebar.classList.add('collapsed');
+      mainContent.classList.add('expanded');
+    }
+
+    // Set active link visually based on current URL path
+    const navLinks = document.querySelectorAll('.sidebar .nav-link');
+    const currentPath = window.location.pathname;
+    navLinks.forEach(link => {
+      if (link.getAttribute('href') === currentPath || (currentPath !== '/' && link.getAttribute('href').startsWith(currentPath) && link.getAttribute('href') !== '/')) {
+        link.classList.add('active');
+      }
+    });
+
+    // Global Floating Circles Animation
+    const _colors = ['#7c6ef0', '#5b4fcf', '#a89af5', '#3d3580', '#6c5ce7'];
+    const _bg = document.getElementById('globalBg');
+    for (let i = 0; i < 15; i++) {
+      const c = document.createElement('div');
+      const size = Math.random() * 250 + 50;
+      const duration = Math.random() * 10 + 6;
+      const delay = Math.random() * 6;
+      c.style.cssText = `
+        position: absolute;
+        border-radius: 50%;
+        width: ${size}px;
+        height: ${size}px;
+        left: ${Math.random() * 100}%;
+        top: ${Math.random() * 100}%;
+        background: ${_colors[Math.floor(Math.random() * _colors.length)]};
+        opacity: 0.05;
+        animation: _float ${duration}s ease-in-out ${delay}s infinite;
+      `;
+      _bg.appendChild(c);
+    }
+  </script>
+
+  <style>
+    @keyframes _float {
+      0% {
+        transform: translateY(0px) scale(1);
+      }
+
+      33% {
+        transform: translateY(-30px) scale(1.04);
+      }
+
+      66% {
+        transform: translateY(15px) scale(0.97);
+      }
+
+      100% {
+        transform: translateY(0px) scale(1);
+      }
+    }
+  </style>
+</body>
+
+</html>

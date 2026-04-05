@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Verify Code — 3am{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px; margin: 80px auto;">
+
+  <div style="text-align: center; margin-bottom: 32px;">
+    <div style="font-size: 3rem;">📩</div>
+    <h1 style="font-size: 2.5rem; font-weight: 900; color: var(--purple); letter-spacing: -2px;">Check your email</h1>
+    <p style="color: var(--muted); font-size: 0.9rem;">We sent a 6-digit code to <strong>{{ email }}</strong></p>
+  </div>
+
+  <div class="card" style="padding: 50px;">
+    <form method="POST">
+      <div style="margin-bottom: 35px;">
+        <label style="display:block; font-size:1rem; color:var(--muted); margin-bottom:8px;">
+          Verification Code
+        </label>
+        <input type="text" name="code" maxlength="6"
+          style="width:100%; padding:12px 16px; border-radius:10px; background:var(--bg2); border:1px solid var(--border); color:var(--text); font-size:1.5rem; text-align:center; letter-spacing:8px; font-weight:700;"
+          placeholder="000000" required autofocus>
+      </div>
+
+      <button type="submit" class="btn btn-primary"
+        style="width:100%; justify-content:center; padding:14px; font-size: 1.05rem; font-weight: 600;">
+        Verify Code
+      </button>
+    </form>
+
+    <p style="text-align:center; margin-top:24px; font-size:0.85rem; color:var(--muted);">
+      Didn't receive it? <a href="/forgot-password" style="color:var(--purple);">Try again</a>
+    </p>
+  </div>
+
+</div>
+{% endblock %}

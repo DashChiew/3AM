@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}User Feedback — Admin{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:24px; display:flex; justify-content:space-between; align-items:flex-end;">
+  <div>
+    <h1 style="font-size:1.6rem; font-weight:800; display:flex; align-items:center; gap:8px;">
+      <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="var(--purple)" style="width:24px;height:24px;" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+      User Feedback
+    </h1>
+    <p style="color:var(--muted); margin-top:4px;">Read and manage feedback submitted by users.</p>
+  </div>
+  <a href="{{ url_for('admin.dashboard') }}" class="btn btn-ghost" style="text-decoration:none;">← Back to Dash</a>
+</div>
+
+{% if feedbacks %}
+<div style="display:flex; flex-direction:column; gap:16px;">
+  {% for fb in feedbacks %}
+  <div class="card" style="border:1px solid {% if not fb.is_read %}var(--purple){% else %}var(--border){% endif %}; {% if not fb.is_read %}background:rgba(124,110,240,0.05);{% endif %}">
+    <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+      <div style="font-size:0.85rem; color:var(--muted);">
+        <strong style="color:var(--text);">{{ fb.user.username }}</strong> &middot; {{ fb.created_at.strftime('%b %d, %Y %H:%M') }}
+        {% if not fb.is_read %}
+        <span style="background:var(--purple); color:white; padding:2px 8px; border-radius:99px; font-size:0.65rem; margin-left:6px; font-weight:700;">NEW</span>
+        {% endif %}
+      </div>
+      
+      <div style="display:flex; gap:8px;">
+        {% if not fb.is_read %}
+        <form action="{{ url_for('admin.read_feedback', id=fb.id) }}" method="POST">
+          <button type="submit" class="btn btn-primary" style="padding:4px 12px; font-size:0.8rem;">Mark Read</button>
+        </form>
+        {% endif %}
+        <form action="{{ url_for('admin.delete_feedback', id=fb.id) }}" method="POST" onsubmit="return confirm('Delete this feedback permanently?');">
+          <button type="submit" class="btn btn-danger" style="padding:4px 12px; font-size:0.8rem; background:rgba(248,113,113,0.15); border:1px solid rgba(248,113,113,0.3); color:var(--red);">Delete</button>
+        </form>
+      </div>
+    </div>
+    
+    <div style="font-size:0.95rem; color:var(--text); white-space:pre-wrap; line-height:1.5;">{{ fb.message }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center; padding:40px 20px;">
+  <p style="color:var(--muted);">No feedback has been submitted yet.</p>
+</div>
+{% endif %}
+
+{% endblock %}

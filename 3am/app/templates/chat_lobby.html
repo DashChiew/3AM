@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Night Rooms — 3AM{% endblock %}
+
+{% block content %}
+
+  <h1 style="font-size:1.5rem; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:8px;">
+    <svg viewBox="0 0 24 24" fill="none" style="width:24px;height:24px;color:var(--purple);" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    Night Rooms
+  </h1>
+<p style="color:var(--muted); margin-bottom:24px;">
+  Real-time peer support. Others are awake right now — you are not alone.
+</p>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+  {% for room in rooms %}
+  <a href="/chat/{{ room.id }}" style="text-decoration:none;">
+    <div class="card room-card" style="cursor:pointer; transition:all 0.3s;">
+      <div style="display:flex; justify-content:space-between;
+                  align-items:center; margin-bottom:8px;">
+        <div class="card-title" style="margin-bottom:0;">
+          {{ room.name }}
+        </div>
+        <span style="background:rgba(74,222,128,0.15); color:var(--green);
+                     padding:3px 10px; border-radius:99px; font-size:0.75rem;
+                     font-weight:600;">
+          ● Live
+        </span>
+      </div>
+      <p style="color:var(--muted); font-size:0.875rem;">
+        {{ room.description }}
+      </p>
+      <div style="margin-top:12px; font-size:0.8rem; color:var(--purple);">
+        Join room →
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="card" style="margin-top:24px; border-color:var(--purple);
+     background:rgba(124,110,240,0.05);">
+    <p style="margin-top:16px; font-size:0.85rem; color:var(--muted); text-align:center;">
+    <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" style="width:14px;height:14px;vertical-align:text-top;margin-right:4px;" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> All rooms support anonymous mode — toggle it in your <strong>Settings</strong>.<br>
+    Messages are not saved permanently.
+    </p>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.room-card').forEach(card => {
+  card.addEventListener('mouseenter', () => {
+    card.style.transform   = 'translateY(-4px)';
+    card.style.borderColor = 'var(--purple)';
+    card.style.boxShadow   = '0 8px 24px rgba(124,110,240,0.2)';
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform   = 'translateY(0)';
+    card.style.borderColor = 'var(--border)';
+    card.style.boxShadow   = 'none';
+  });
+});
+</script>
+{% endblock %}

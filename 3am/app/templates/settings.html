@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% block title %}Settings — 3AM{% endblock %}
+
+{% block extra_css %}
+<style>
+  .settings-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .settings-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--purple);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .form-group {
+    margin-bottom: 14px;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 11px 14px;
+    border-radius: 10px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--purple);
+  }
+
+  .toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toggle-row:last-child {
+    border-bottom: none;
+  }
+
+  .toggle-label {
+    font-size: 0.9rem;
+  }
+
+  .toggle-desc {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  /* Toggle switch */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: var(--border);
+    border-radius: 99px;
+    transition: 0.3s;
+  }
+
+  .slider:before {
+    content: "";
+    position: absolute;
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+  }
+
+  input:checked+.slider {
+    background: var(--purple);
+  }
+
+  input:checked+.slider:before {
+    transform: translateX(20px);
+  }
+
+  .danger-zone {
+    border-color: rgba(248, 113, 113, 0.3);
+  }
+
+  .danger-zone .settings-title {
+    color: var(--red);
+  }
+
+  .btn-danger {
+    background: rgba(248, 113, 113, 0.15);
+    color: var(--red);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+  }
+
+  .btn-danger:hover {
+    background: var(--red);
+    color: white;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div style="margin-bottom:24px;">
+  <h1 style="font-size:1.4rem; font-weight:700;">⚙️ Settings</h1>
+  <p style="color:var(--muted); font-size:0.85rem; margin-top:4px;">
+    Manage your account and preferences
+  </p>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+
+  <!-- Left column -->
+  <div>
+
+    <!-- Profile -->
+    <div class="settings-section">
+      <div class="settings-title">👤 Profile</div>
+      <form method="POST">
+        <input type="hidden" name="action" value="update_profile">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input class="form-input" type="text" name="username" value="{{ current_user.username }}" maxlength="80"
+            required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" type="email" name="email" value="{{ current_user.email }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">
+          Save Changes
+        </button>
+      </form>
+    </div>
+
+    <!-- Change Password -->
+    <div class="settings-section">
+      <div class="settings-title">🔒 Change Password</div>
+      <form method="POST">
+        <input type="hidden" name="action" value="change_password">
+        <div class="form-group">
+          <label class="form-label">Current Password</label>
+          <input class="form-input" type="password" name="current_password" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">New Password</label>
+          <input class="form-input" type="password" name="new_password" minlength="8" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Confirm New Password</label>
+          <input class="form-input" type="password" name="confirm_password" minlength="8" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">
+          Update Password
+        </button>
+      </form>
+    </div>
+
+  </div>
+
+  <!-- Right column -->
+  <div>
+
+    <!-- Account info -->
+    <div class="settings-section">
+      <div class="settings-title">📋 Account Info</div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Member since</div>
+          <div class="toggle-desc">{{ current_user.created_at.strftime('%B %d, %Y') }}</div>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Check-in streak</div>
+          <div class="toggle-desc">{{ current_user.checkin_streak }} nights 🔥</div>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">Account type</div>
+          <div class="toggle-desc">{{ 'Admin 🛡️' if current_user.is_admin else 'Member' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preferences -->
+    <div class="settings-section">
+      <div class="settings-title">🎛️ Preferences</div>
+      <form method="POST">
+        <input type="hidden" name="action" value="toggle_anonymous">
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">Anonymous Mode</div>
+            <div class="toggle-desc">Hide your name in Community and Night Room posts</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" onchange="this.form.submit()" {{ 'checked' if current_user.is_anonymous_mode }}>
+            <span class="slider"></span>
+          </label>
+        </div>
+      </form>
+    </div>
+
+    <!-- Feedback -->
+    <div class="settings-section">
+      <div class="settings-title">✉️ Submit Feedback</div>
+      <p style="font-size:0.85rem; color:var(--muted); margin-bottom:12px;">
+        Let the admins know what we can improve, or report any bugs you encounter.
+      </p>
+      <form method="POST">
+        <input type="hidden" name="action" value="submit_feedback">
+        <div class="form-group">
+          <textarea class="form-input" name="message" rows="4" placeholder="Type your feedback here..." required
+            style="resize:vertical;"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">
+          Send Feedback
+        </button>
+      </form>
+    </div>
+
+    <!-- Sign out -->
+    <div class="settings-section danger-zone">
+      <div class="settings-title">🚪 Session</div>
+      <p style="font-size:0.85rem; color:var(--muted); margin-bottom:16px;">
+        You will be signed out of your current session.
+      </p>
+      <a href="/logout" class="btn btn-danger"
+        style="display:block; text-align:center; text-decoration:none; padding:11px;">
+        Sign Out
+      </a>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

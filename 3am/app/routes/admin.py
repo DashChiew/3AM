@@ -86,12 +86,11 @@ def transfer_admin():
 @admin_required
 def manage_helplines():
     if request.method == "POST":
-        while True:
-            name = request.form.get("name")
-            phone = request.form.get("phone")
-            type = request.form.get("type", "General")
-            is_24hr = request.form.get("is_24hr") == 'on'
-            h = Helpline(name=name, phone=phone, type=type, is_24hr=is_24hr)
+        name = request.form.get("name")
+        phone = request.form.get("phone")
+        type = request.form.get("type", "General")
+        is_24hr = request.form.get("is_24hr") == 'on'
+        h = Helpline(name=name, phone=phone, type=type, is_24hr=is_24hr)
         db.session.add(h)
         db.session.commit()
         flash(f"Helpline '{name}' deployed securely.", "success")

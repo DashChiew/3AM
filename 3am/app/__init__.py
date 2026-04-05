@@ -47,7 +47,7 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
-    async_mode = "gevent" if os.getenv("RENDER") else "threading"
+    async_mode = "eventlet" if os.getenv("RENDER") else "threading"
     socketio.init_app(app, cors_allowed_origins="*", async_mode=async_mode)
     limiter.init_app(app)
     bcrypt.init_app(app)

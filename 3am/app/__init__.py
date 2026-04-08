@@ -56,14 +56,21 @@ def create_app():
             db_url = db_url.split("?ssl-mode=")[0]
         elif "&ssl-mode=" in db_url:
             db_url = db_url.split("&ssl-mode=")[0]
-            
-        if "?" in db_url:
-            db_url += "&connect_timeout=10&read_timeout=10"
-        else:
-            db_url += "?connect_timeout=10&read_timeout=10"
         
     print(f"🔥 BOOTING WITH DATABASE URL: {db_url} 🔥", flush=True)
     app.config["SQLALCHEMY_DATABASE_URI"]        = db_url
+    
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_pre_ping": True,
+        "pool_recycle": 280,
+    }
+    
+    if db_url.startswith("mysql"):
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"]["connect_args"] = {
+            "ssl": {"dummy": "required"}, 
+            "connect_timeout": 10
+        }
+    
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["OPENAI_API_KEY"]                 = os.getenv("OPENAI_API_KEY", "")
     app.config["GEMINI_API_KEY"]                 = os.getenv("GEMINI_API_KEY", "")

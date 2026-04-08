@@ -615,46 +615,7 @@
     }
   </script>
   
-  <script type="module">
-    import { animate, spring } from "https://cdn.jsdelivr.net/npm/motion@11.11.13/+esm";
-    
-    // Apply subtle 3D tilt to all standard cards globally
-    const globalCards = document.querySelectorAll('.card');
-    globalCards.forEach(card => {
-        card.style.transformStyle = 'preserve-3d';
-        
-        const title = card.querySelector('.card-title');
-        if (title) title.style.transform = 'translateZ(20px)';
-        
-        card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            const xPct = (x / rect.width) - 0.5;
-            const yPct = (y / rect.height) - 0.5;
-            
-            const rotateX = yPct * -15;
-            const rotateY = xPct * 15;
-            
-            animate(card, {
-                rotateX: rotateX,
-                rotateY: rotateY,
-                scale: 1.02,
-                transformPerspective: 1200
-            }, { type: spring, stiffness: 400, damping: 25 });
-        });
-        
-        card.addEventListener('mouseleave', () => {
-            animate(card, {
-                rotateX: 0,
-                rotateY: 0,
-                scale: 1,
-                transformPerspective: 1200
-            }, { type: spring, stiffness: 300, damping: 20 });
-        });
-    });
-  </script>
+
 
   <style>
     @keyframes _float {

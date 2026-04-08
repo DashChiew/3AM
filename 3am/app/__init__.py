@@ -54,6 +54,11 @@ def create_app():
         db_url = db_url.replace("postgres://", "postgresql://", 1)
     elif db_url.startswith("mysql://"):
         db_url = db_url.replace("mysql://", "mysql+pymysql://", 1)
+        # Fix Aiven MySQL breaking PyMySQL parsing
+        if "?ssl-mode=" in db_url:
+            db_url = db_url.split("?ssl-mode=")[0]
+        elif "&ssl-mode=" in db_url:
+            db_url = db_url.split("&ssl-mode=")[0]
         
     print(f"🔥 BOOTING WITH DATABASE URL: {db_url} 🔥", flush=True)
     app.config["SQLALCHEMY_DATABASE_URI"]        = db_url

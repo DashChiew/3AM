@@ -43,7 +43,7 @@ def create_app():
     
     if not db_url:
         for k, v in os.environ.items():
-            if "postgres://" in v or "postgresql://" in v:
+            if "mysql://" in v or "postgres://" in v or "postgresql://" in v:
                 db_url = v.strip('"').strip("'").strip()
                 break
 
@@ -52,6 +52,8 @@ def create_app():
 
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
+    elif db_url.startswith("mysql://"):
+        db_url = db_url.replace("mysql://", "mysql+pymysql://", 1)
         
     print(f"🔥 BOOTING WITH DATABASE URL: {db_url} 🔥", flush=True)
     app.config["SQLALCHEMY_DATABASE_URI"]        = db_url

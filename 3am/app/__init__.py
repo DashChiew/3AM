@@ -39,10 +39,21 @@ def create_app():
     default_sqlite_url = f"sqlite:///{db_path}"
     
     # Render provides postgres:// but SQLAlchemy 2.x needs postgresql://
-    db_url = os.getenv("DATABASE_URL", default_sqlite_url)
+    db_url = os.getenv("DATABASE_URL", "").strip('"').strip("'").strip()
+    
+    if not db_url:
+        for k, v in os.environ.items():
+            if "postgres://" in v or "postgresql://" in v:
+                db_url = v.strip('"').strip("'").strip()
+                break
+
+    if not db_url:
+        db_url = default_sqlite_url
+
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
         
+    print(f"🔥 BOOTING WITH DATABASE URL: {db_url} 🔥", flush=True)
     app.config["SQLALCHEMY_DATABASE_URI"]        = db_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["OPENAI_API_KEY"]                 = os.getenv("OPENAI_API_KEY", "")

@@ -1,7 +1,4 @@
 import os
-if os.getenv("RENDER"):
-    import eventlet
-    eventlet.monkey_patch()
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -83,8 +80,7 @@ def create_app():
 
     db.init_app(app)
     login_manager.init_app(app)
-    async_mode = "eventlet" if os.getenv("RENDER") else "threading"
-    socketio.init_app(app, cors_allowed_origins="*", async_mode=async_mode)
+    socketio.init_app(app, cors_allowed_origins="*", async_mode="threading")
     limiter.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)

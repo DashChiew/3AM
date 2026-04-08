@@ -33,9 +33,10 @@ def create_app():
     # Establish an absolute path for local SQLite to prevent the database from 
     # resetting if the app is run from a different terminal directory
     base_dir = os.path.abspath(os.path.dirname(__file__))
-    instance_dir = os.path.join(base_dir, "instance")
+    instance_dir = os.path.abspath(os.path.join(base_dir, "..", "instance"))
     os.makedirs(instance_dir, exist_ok=True)
-    default_sqlite_url = "sqlite:///" + os.path.join(instance_dir, "3am.db")
+    db_path = os.path.join(instance_dir, "3am.db").replace("\\", "/")
+    default_sqlite_url = f"sqlite:///{db_path}"
     
     # Render provides postgres:// but SQLAlchemy 2.x needs postgresql://
     db_url = os.getenv("DATABASE_URL", default_sqlite_url)

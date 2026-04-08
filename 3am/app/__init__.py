@@ -82,6 +82,20 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        
+        # Ephemeral messaging feature: Clear all community and night room messages
+        # every time the server restarts to ensure maximum privacy.
+        try:
+            from app.models import Post, Comment, ChatMessage
+            db.session.query(Comment).delete()
+            db.session.query(Post).delete()
+            db.session.query(ChatMessage).delete()
+            db.session.commit()
+            print("Ephemeral community and night room data securely wiped.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error wiping ephemeral data: {e}")
+            
         _seed_helplines()
         _seed_rooms()
 

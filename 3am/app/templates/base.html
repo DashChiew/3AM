@@ -337,6 +337,25 @@
       border-color: var(--purple);
       color: var(--purple);
     }
+
+    /* ── Antigravity Glow Cursor ── */
+    #agGlow {
+      position: fixed;
+      top: 0; left: 0;
+      width: 600px; height: 600px;
+      margin-left: -300px; margin-top: -300px;
+      background: radial-gradient(circle, rgba(124, 110, 240, 0.12), rgba(167, 139, 250, 0.08), transparent 60%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      mix-blend-mode: screen;
+      transform: translate(-1000px, -1000px);
+      transition: opacity 0.5s ease;
+      opacity: 0;
+    }
+    body:hover #agGlow {
+      opacity: 1;
+    }
   </style>
   {% block scripts %}{% endblock %}
   {% set show_sidebar = request.endpoint not in ['auth.login', 'auth.register'] %}
@@ -347,6 +366,9 @@
      height:100%; pointer-events:none; z-index:-1; overflow:hidden;"></div>
 
 <body>
+  <!-- Antigravity interactive spotlight -->
+  <div id="agGlow"></div>
+  
   <div class="mobile-overlay" id="mobileOverlay"></div>
   {% if show_sidebar %}
   <!-- Sidebar -->
@@ -581,6 +603,57 @@
       `;
       _bg.appendChild(c);
     }
+
+    // ── Antigravity Interactive Cursor Glow ──
+    const agGlow = document.getElementById('agGlow');
+    if (agGlow && window.matchMedia("(hover: hover)").matches) {
+      document.addEventListener('mousemove', (e) => {
+        requestAnimationFrame(() => {
+          agGlow.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+        });
+      });
+    }
+  </script>
+  
+  <script type="module">
+    import { animate, spring } from "https://cdn.jsdelivr.net/npm/motion@11.11.13/+esm";
+    
+    // Apply subtle 3D tilt to all standard cards globally
+    const globalCards = document.querySelectorAll('.card');
+    globalCards.forEach(card => {
+        card.style.transformStyle = 'preserve-3d';
+        
+        const title = card.querySelector('.card-title');
+        if (title) title.style.transform = 'translateZ(20px)';
+        
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const xPct = (x / rect.width) - 0.5;
+            const yPct = (y / rect.height) - 0.5;
+            
+            const rotateX = yPct * -15;
+            const rotateY = xPct * 15;
+            
+            animate(card, {
+                rotateX: rotateX,
+                rotateY: rotateY,
+                scale: 1.02,
+                transformPerspective: 1200
+            }, { type: spring, stiffness: 400, damping: 25 });
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            animate(card, {
+                rotateX: 0,
+                rotateY: 0,
+                scale: 1,
+                transformPerspective: 1200
+            }, { type: spring, stiffness: 300, damping: 20 });
+        });
+    });
   </script>
 
   <style>

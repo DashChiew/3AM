@@ -29,10 +29,19 @@ def create_app():
 
     app.config["SECRET_KEY"]                     = os.getenv("SECRET_KEY", "dev-secret")
     app.config["JWT_SECRET_KEY"]                 = app.config["SECRET_KEY"]
+    
+    # Establish an absolute path for local SQLite to prevent the database from 
+    # resetting if the app is run from a different terminal directory
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    instance_dir = os.path.join(base_dir, "instance")
+    os.makedirs(instance_dir, exist_ok=True)
+    default_sqlite_url = "sqlite:///" + os.path.join(instance_dir, "3am.db")
+    
     # Render provides postgres:// but SQLAlchemy 2.x needs postgresql://
-    db_url = os.getenv("DATABASE_URL", "sqlite:///3am.db")
+    db_url = os.getenv("DATABASE_URL", default_sqlite_url)
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
+        
     app.config["SQLALCHEMY_DATABASE_URI"]        = db_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["OPENAI_API_KEY"]                 = os.getenv("OPENAI_API_KEY", "")
@@ -82,20 +91,6 @@ def create_app():
 
     with app.app_context():
         db.create_all()
-        
-        # Ephemeral messaging feature: Clear all community and night room messages
-        # every time the server restarts to ensure maximum privacy.
-        try:
-            from app.models import Post, Comment, ChatMessage
-            db.session.query(Comment).delete()
-            db.session.query(Post).delete()
-            db.session.query(ChatMessage).delete()
-            db.session.commit()
-            print("Ephemeral community and night room data securely wiped.")
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error wiping ephemeral data: {e}")
-            
         _seed_helplines()
         _seed_rooms()
 

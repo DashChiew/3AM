@@ -59,6 +59,11 @@ def create_app():
             db_url = db_url.split("?ssl-mode=")[0]
         elif "&ssl-mode=" in db_url:
             db_url = db_url.split("&ssl-mode=")[0]
+            
+        if "?" in db_url:
+            db_url += "&connect_timeout=10&read_timeout=10"
+        else:
+            db_url += "?connect_timeout=10&read_timeout=10"
         
     print(f"🔥 BOOTING WITH DATABASE URL: {db_url} 🔥", flush=True)
     app.config["SQLALCHEMY_DATABASE_URI"]        = db_url

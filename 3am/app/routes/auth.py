@@ -106,6 +106,11 @@ def register():
         anon_mode = request.form.get("anonymous_mode") == "on"
         user = User(username=username, email=email, is_anonymous_mode=anon_mode)
         user.set_password(password)
+
+        # First registered account automatically becomes admin
+        if User.query.count() == 0:
+            user.is_admin = True
+
         db.session.add(user)
         db.session.commit()
 

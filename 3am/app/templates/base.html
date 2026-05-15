@@ -404,6 +404,133 @@
       50%       { transform: rotate(5deg); }
     }
 
+    /* ── Sign-Out Overlay ── */
+    #signOutOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: radial-gradient(ellipse at center, #0e0e24 0%, #0a0a1a 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      opacity: 0;
+      transition: opacity 0.7s ease;
+      pointer-events: none;
+    }
+    #signOutOverlay.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    /* ── Step 1: confirmation card ── */
+    #signOutOverlay .so-card {
+      background: rgba(22, 22, 46, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      animation: wlc-rise 0.8s ease both;
+      animation-delay: 0.15s;
+    }
+    #signOutOverlay .so-icon {
+      font-size: 2.6rem;
+      animation: wlc-sway 3s ease-in-out 1s infinite;
+    }
+    #signOutOverlay .so-question {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      text-align: center;
+    }
+    #signOutOverlay .so-sub {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+      max-width: 280px;
+      line-height: 1.6;
+    }
+    #signOutOverlay .so-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    #signOutOverlay .so-btn {
+      padding: 11px 28px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
+    }
+    #signOutOverlay .so-btn-stay {
+      background: rgba(124,110,240,0.15);
+      color: var(--purple);
+      border: 1px solid rgba(124,110,240,0.35);
+    }
+    #signOutOverlay .so-btn-stay:hover {
+      background: rgba(124,110,240,0.3);
+    }
+    #signOutOverlay .so-btn-leave {
+      background: rgba(248,113,113,0.12);
+      color: var(--red);
+      border: 1px solid rgba(248,113,113,0.3);
+    }
+    #signOutOverlay .so-btn-leave:hover {
+      background: rgba(248,113,113,0.25);
+    }
+    /* ── Step 2: goodbye message ── */
+    #signOutOverlay .so-goodbye {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      text-align: center;
+    }
+    #signOutOverlay .so-goodbye.active {
+      display: flex;
+    }
+    #signOutOverlay .so-goodbye .wlc-eyebrow {
+      font-size: 0.85rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      animation: wlc-rise 0.8s ease both;
+    }
+    #signOutOverlay .so-goodbye .so-bye-text {
+      font-size: clamp(1.1rem, 3vw, 1.5rem);
+      font-weight: 800;
+      max-width: 420px;
+      line-height: 1.5;
+      background: linear-gradient(135deg, #a89af5 0%, #7c6ef0 50%, #5b4fcf 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: wlc-rise 0.8s ease both;
+      animation-delay: 0.15s;
+    }
+    #signOutOverlay .so-goodbye .wlc-moon {
+      font-size: 2.5rem;
+      animation: wlc-rise 0.8s ease both, wlc-sway 3s ease-in-out 0.8s infinite;
+      animation-delay: 0.3s, 0.8s;
+    }
+    #signOutOverlay .so-goodbye .wlc-hint {
+      position: absolute;
+      bottom: 40px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      opacity: 0;
+      animation: wlc-fadein 0.6s ease forwards;
+      animation-delay: 1.2s;
+      letter-spacing: 0.1em;
+    }
+
     /* ── Antigravity Glow Cursor ── */
     #agGlow {
       position: fixed;
@@ -444,6 +571,27 @@
     <span class="wlc-hint">tap anywhere to continue</span>
   </div>
   {% endif %}
+
+  <!-- Sign-out overlay (two-step: confirm → goodbye) -->
+  <div id="signOutOverlay" aria-hidden="true">
+    <!-- Step 1: confirm -->
+    <div class="so-card" id="soStep1">
+      <span class="so-icon">🚪</span>
+      <span class="so-question">Sign out of 3AM?</span>
+      <p class="so-sub">We'll be right here whenever you need us.</p>
+      <div class="so-actions">
+        <button class="so-btn so-btn-stay" id="soStay">Stay</button>
+        <button class="so-btn so-btn-leave" id="soLeave">Yes, sign out</button>
+      </div>
+    </div>
+    <!-- Step 2: goodbye -->
+    <div class="so-goodbye" id="soStep2">
+      <span class="wlc-eyebrow">See you soon</span>
+      <span class="so-bye-text">Remember you are not alone 💖<br>feel free to come back to us anytime!!! ☺️</span>
+      <span class="wlc-moon">🌙</span>
+      <span class="wlc-hint">redirecting you now…</span>
+    </div>
+  </div>
 
   <div class="mobile-overlay" id="mobileOverlay"></div>
   {% if show_sidebar %}
@@ -557,8 +705,7 @@
         </svg>
         <span class="nav-text">Settings</span>
       </a>
-      <a href="/logout" class="nav-link" style="color:var(--red);"
-        onclick="if(confirm('Sign out of 3AM?')){ alert('Remember you are not alone 💖, feel free to come back to us anytime!!!☺️'); return true; } return false;">
+      <a id="signOutBtn" href="#" class="nav-link" style="color:var(--red);">
         <svg viewBox="0 0 24 24" fill="none" class="nav-icon" stroke="currentColor" stroke-linecap="round"
           stroke-linejoin="round">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -693,15 +840,50 @@
     // ── Welcome Overlay Logic ──
     const wlcOverlay = document.getElementById('welcomeOverlay');
     if (wlcOverlay) {
-      // Fade in on next frame so CSS transition fires
       requestAnimationFrame(() => {
         requestAnimationFrame(() => wlcOverlay.classList.add('visible'));
       });
-      // Click anywhere → fade out → remove
       wlcOverlay.addEventListener('click', () => {
         wlcOverlay.style.opacity = '0';
         wlcOverlay.style.transition = 'opacity 0.6s ease';
         setTimeout(() => wlcOverlay.remove(), 650);
+      });
+    }
+
+    // ── Sign-Out Overlay Logic ──
+    const soOverlay  = document.getElementById('signOutOverlay');
+    const soBtn      = document.getElementById('signOutBtn');
+    const soStay     = document.getElementById('soStay');
+    const soLeave    = document.getElementById('soLeave');
+    const soStep1    = document.getElementById('soStep1');
+    const soStep2    = document.getElementById('soStep2');
+
+    if (soBtn && soOverlay) {
+      // Open overlay on click
+      soBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        soOverlay.classList.add('visible');
+      });
+
+      // Stay → close overlay
+      soStay.addEventListener('click', () => {
+        soOverlay.style.opacity = '0';
+        setTimeout(() => {
+          soOverlay.style.opacity = '';
+          soOverlay.classList.remove('visible');
+        }, 650);
+      });
+
+      // Leave → swap to goodbye screen → redirect
+      soLeave.addEventListener('click', () => {
+        soStep1.style.display = 'none';
+        soStep2.classList.add('active');
+        // Redirect after user sees the message
+        setTimeout(() => {
+          soOverlay.style.opacity = '0';
+          soOverlay.style.transition = 'opacity 0.7s ease';
+          setTimeout(() => { window.location.href = '/logout'; }, 750);
+        }, 2800);
       });
     }
   </script>

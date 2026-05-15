@@ -34,7 +34,7 @@ def login():
             user.is_anonymous_mode = request.form.get("anonymous_mode") == "on"
             db.session.commit()
             login_user(user, remember=True)
-            flash(f"Welcome back, {user.username} 🌙", "success")
+            session['show_welcome'] = True
             return redirect(url_for("main.index"))
 
         flash("Wrong username or password. Try again.", "error")

@@ -338,6 +338,72 @@
       color: var(--purple);
     }
 
+    /* ── Welcome Overlay ── */
+    #welcomeOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: radial-gradient(ellipse at center, #0e0e24 0%, #0a0a1a 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      opacity: 0;
+      transition: opacity 0.7s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    #welcomeOverlay.visible {
+      opacity: 1;
+    }
+    #welcomeOverlay .wlc-eyebrow {
+      font-size: 0.85rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--muted);
+      animation: wlc-rise 0.9s ease both;
+      animation-delay: 0.2s;
+    }
+    #welcomeOverlay .wlc-name {
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 900;
+      letter-spacing: -2px;
+      background: linear-gradient(135deg, #a89af5 0%, #7c6ef0 50%, #5b4fcf 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: wlc-rise 0.9s ease both;
+      animation-delay: 0.35s;
+    }
+    #welcomeOverlay .wlc-moon {
+      font-size: 2.5rem;
+      animation: wlc-rise 0.9s ease both, wlc-sway 3s ease-in-out 1.2s infinite;
+      animation-delay: 0.5s, 1.2s;
+    }
+    #welcomeOverlay .wlc-hint {
+      position: absolute;
+      bottom: 40px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      opacity: 0;
+      animation: wlc-fadein 0.6s ease forwards;
+      animation-delay: 1.4s;
+      letter-spacing: 0.1em;
+    }
+    @keyframes wlc-rise {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes wlc-fadein {
+      from { opacity: 0; }
+      to   { opacity: 0.5; }
+    }
+    @keyframes wlc-sway {
+      0%, 100% { transform: rotate(-5deg); }
+      50%       { transform: rotate(5deg); }
+    }
+
     /* ── Antigravity Glow Cursor ── */
     #agGlow {
       position: fixed;
@@ -368,7 +434,17 @@
 <body>
   <!-- Antigravity interactive spotlight -->
   <div id="agGlow"></div>
-  
+
+  <!-- Welcome overlay (shown once after login) -->
+  {% if session.pop('show_welcome', False) %}
+  <div id="welcomeOverlay">
+    <span class="wlc-eyebrow">Welcome back</span>
+    <span class="wlc-name">{{ current_user.username }}</span>
+    <span class="wlc-moon">🌙</span>
+    <span class="wlc-hint">tap anywhere to continue</span>
+  </div>
+  {% endif %}
+
   <div class="mobile-overlay" id="mobileOverlay"></div>
   {% if show_sidebar %}
   <!-- Sidebar -->
@@ -611,6 +687,21 @@
         requestAnimationFrame(() => {
           agGlow.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
         });
+      });
+    }
+
+    // ── Welcome Overlay Logic ──
+    const wlcOverlay = document.getElementById('welcomeOverlay');
+    if (wlcOverlay) {
+      // Fade in on next frame so CSS transition fires
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => wlcOverlay.classList.add('visible'));
+      });
+      // Click anywhere → fade out → remove
+      wlcOverlay.addEventListener('click', () => {
+        wlcOverlay.style.opacity = '0';
+        wlcOverlay.style.transition = 'opacity 0.6s ease';
+        setTimeout(() => wlcOverlay.remove(), 650);
       });
     }
   </script>
